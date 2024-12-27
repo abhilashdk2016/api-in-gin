@@ -1,0 +1,127 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "This is a sample recipes API.",
+    "title": "Recipes API",
+    "contact": {
+      "name": "Abhilash D K",
+      "email": "abhilashdk2018@outlook.com"
+    },
+    "version": "1.0.0"
+  },
+  "host": "localhost:8080",
+  "basePath": "/",
+  "paths": {
+    "/recipes": {
+      "get": {
+        "description": "Returns list of recipes",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "recipes"
+        ],
+        "operationId": "listRecipes"
+      },
+      "post": {
+        "description": "Create a new recipe",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "recipes"
+        ],
+        "operationId": "newRecipe"
+      }
+    },
+    "/recipes/search": {
+      "get": {
+        "description": "Search recipes based on tags",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "recipes"
+        ],
+        "operationId": "findRecipe",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "recipe tag",
+            "name": "tag",
+            "in": "query",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/recipes/{id}": {
+      "get": {
+        "description": "Get one recipe",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "recipes"
+        ],
+        "operationId": "oneRecipe",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of the recipe",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ]
+      },
+      "put": {
+        "description": "Update an existing recipe",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "recipes"
+        ],
+        "operationId": "updateRecipe",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of the recipe",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ]
+      },
+      "delete": {
+        "description": "Delete an existing recipe",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "recipes"
+        ],
+        "operationId": "deleteRecipe",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "ID of the recipe",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    }
+  }
+}
