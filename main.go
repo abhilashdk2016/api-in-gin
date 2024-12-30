@@ -21,7 +21,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"time"
 
 	handlers "github.com/abhilashdk2016/api-in-gin/handlers"
 
@@ -31,16 +30,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-type Recipe struct {
-	ID           string    `json:"id"`
-	Name         string    `json:"name"`
-	Tags         []string  `json:"tags"`
-	Ingredients  []string  `json:"ingredients"`
-	Instructions []string  `json:"instructions"`
-	PublishedAt  time.Time `json:"publishedAt"`
-}
-
-var recipes []Recipe
+var recipesHandler *handlers.RecipesHandler
 
 func init() {
 	// recipes = make([]Recipe, 0)
@@ -52,6 +42,8 @@ func init() {
 		log.Fatal(err)
 	}
 	log.Println("Connected to MongoDB")
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
+	recipesHandler = handlers.NewRecipesHandler(ctx, collection)
 	// var listOfRecipes []interface{}
 	// for _, recipe := range recipes {
 	// 	listOfRecipes = append(listOfRecipes, recipe)
@@ -67,10 +59,10 @@ func init() {
 
 func main() {
 	router := gin.Default()
-	router.GET("/recipes", handlers.ListRecipesHandler)
-	router.POST("/recipes", handlers.NewRecipeHandler)
-	router.PUT("/recipes/:id", handlers.UpdateRecipeHandler)
-	router.DELETE("/recipes/:id", handlers.DeleteRecipeHandler)
-	router.GET("/recipes/:id", handlers.GetRecipeHandler)
+	router.GET("/recipes", recipesHandler.ListRecipesHandler)
+	router.POST("/recipes", recipesHandler.NewRecipeHandler)
+	router.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
+	router.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
+	router.GET("/recipes/:id", recipesHandler.GetOneRecipeHandler)
 	router.Run()
 }
