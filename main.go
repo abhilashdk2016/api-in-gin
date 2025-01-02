@@ -19,19 +19,23 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"log"
 	"os"
 
 	handlers "github.com/abhilashdk2016/api-in-gin/handlers"
+	"github.com/gin-contrib/cors"
 	"github.com/go-redis/redis"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 var recipesHandler *handlers.RecipesHandler
+var authHandler *handlers.AuthHandler
 
 func init() {
 	// recipes = make([]Recipe, 0)
@@ -54,6 +58,8 @@ func init() {
 	log.Println(status)
 
 	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
+	collectionUsers := client.Database(os.Getenv("MONGO_DATABASE")).Collection("users")
+	authHandler = handlers.NewAuthHandler(ctx, collectionUsers)
 	// var listOfRecipes []interface{}
 	// for _, recipe := range recipes {
 	// 	listOfRecipes = append(listOfRecipes, recipe)
@@ -67,12 +73,47 @@ func init() {
 	//collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
 }
 
+func createUsers() {
+	users := map[string]string{
+		"admin":      "fCRmh4Q2J7Rseqkz",
+		"packt":      "RE4zfHB35VPtTkbT",
+		"abhilashdk": "L3nSFRcZzNQ67bcc",
+	}
+
+	ctx := context.Background()
+	client, _ := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGO_URI")))
+	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
+		log.Fatal(err)
+	}
+
+	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("users")
+	h := sha256.New()
+
+	for username, password := range users {
+		collection.InsertOne(ctx, bson.M{
+			"username": username,
+			"password": string(h.Sum([]byte(password))),
+		})
+	}
+}
+
 func main() {
+	createUsers()
 	router := gin.Default()
+	router.Use(cors.Default())
 	router.GET("/recipes", recipesHandler.ListRecipesHandler)
-	router.POST("/recipes", recipesHandler.NewRecipeHandler)
-	router.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
-	router.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
-	router.GET("/recipes/:id", recipesHandler.GetOneRecipeHandler)
+
+	router.POST("/signin", authHandler.SignInHandler)
+	router.POST("/refresh", authHandler.RefreshHandler)
+
+	authorized := router.Group("/")
+	authorized.Use(authHandler.AuthMiddleware())
+	{
+		authorized.POST("/recipes", recipesHandler.NewRecipeHandler)
+		authorized.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
+		authorized.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
+		authorized.GET("/recipes/:id", recipesHandler.GetOneRecipeHandler)
+	}
+
 	router.Run()
 }
